@@ -243,7 +243,7 @@ function StepView({
             onClick={() => onNo(current.ifNo!)}
             className="rounded-2xl bg-primary px-8 py-6 text-3xl font-bold text-primary-foreground shadow-sm transition-colors hover:bg-primary-deep"
           >
-            Nein, etwas fehlt
+            Nein, noch nicht
           </button>
           <button
             onClick={onBack}
