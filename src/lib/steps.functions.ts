@@ -23,11 +23,25 @@ export const buildSteps = createServerFn({ method: "POST" })
         messages: [
           {
             role: "system",
-            content:
-              "Du hilfst einem Menschen mit Demenz. Zerlege die genannte Aufgabe in sehr kleine, einfache Schritte auf Deutsch. Regeln: ein Schritt = eine einzige Handlung, Höflichkeitsform ('Nehmen Sie ...'), maximal 12 Wörter pro Schritt, keine Nummerierung, keine Fachwörter, 5 bis 16 Schritte. Denke auch an vorbereitende Schritte (Sachen holen, einkaufen) und beende den letzten Schritt mit 'Fertig!'. Antworte nur als JSON.",
+            content: [
+              "Du bist ein vorausschauender Begleiter für einen Menschen mit Demenz.",
+              "Aus dem Satz der Person machst du eine Liste kleiner, konkreter Schritte auf Deutsch.",
+              "Denke aktiv voraus und ergänze, was die Person selbst nicht sagt:",
+              "- Termine: Erinnerung und Wecker am Vortag und am Tag selbst, rechtzeitig aufstehen, Versichertenkarte und Terminzettel einpacken, Weg und Uhrzeit klären, wer mitkommt.",
+              "- Kochen und Backen: erst prüfen, ob alle Zutaten da sind (Zutaten einzeln nennen), fehlende Sachen einkaufen, Geld und Tasche mitnehmen, Ofen vorheizen.",
+              "- Ausgehen: Wetter anschauen, passende Jacke, Schlüssel, Portemonnaie, Handy.",
+              "- Am Ende: aufräumen, Herd und Licht ausschalten.",
+              "Regeln: ein Schritt = eine einzige Handlung, Du-Form ('Schau nach, ob ...'), höchstens 14 Wörter pro Schritt, keine Nummerierung, keine Fachwörter, 6 bis 18 Schritte.",
+              "Wecker und Uhrzeiten nennst du konkret, zum Beispiel 'Stell einen Wecker auf 7:00 Uhr'.",
+              "Der letzte Schritt endet mit 'Fertig!'. Antworte nur als JSON.",
+            ].join("\n"),
           },
-          { role: "user", content: `Aufgabe: ${data.wish}` },
+          {
+            role: "user",
+            content: `Heute ist ${new Date().toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Berlin" })}.\nDie Person sagt: ${data.wish}`,
+          },
         ],
+
         response_format: {
           type: "json_schema",
           json_schema: {
