@@ -32,11 +32,8 @@ export const tasks: Task[] = [
           "Gehen Sie nach Hause und legen Sie alles auf den Tisch.",
         ],
       },
+      "Stellen Sie den Backofen auf 180 Grad.",
 
-      "Ziehen Sie Jacke und Schuhe an.",
-      "Nehmen Sie Zettel, Geldbeutel und Schlüssel mit.",
-      "Gehen Sie in den Laden und kaufen Sie, was auf dem Zettel steht.",
-      "Gehen Sie nach Hause und legen Sie alles auf den Tisch.",
       "Stellen Sie den Backofen auf 180 Grad.",
       "Geben Sie Butter und Zucker in eine große Schüssel und rühren Sie um.",
       "Schlagen Sie die Eier dazu und rühren Sie weiter.",
