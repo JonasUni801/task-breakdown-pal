@@ -33,8 +33,6 @@ export const tasks: Task[] = [
         ],
       },
       "Stellen Sie den Backofen auf 180 Grad.",
-
-      "Stellen Sie den Backofen auf 180 Grad.",
       "Geben Sie Butter und Zucker in eine große Schüssel und rühren Sie um.",
       "Schlagen Sie die Eier dazu und rühren Sie weiter.",
       "Geben Sie das Mehl dazu und rühren Sie, bis der Teig glatt ist.",
