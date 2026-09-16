@@ -1,20 +1,37 @@
+export type Step = {
+  text: string;
+  /** Ja/Nein-Frage, z. B. "Ist alles da?" */
+  ask?: string;
+  /** Unterschritte, die bei "Nein" eingeschoben werden */
+  ifNo?: string[];
+};
+
 export type Task = {
   id: string;
   title: string;
-  steps: string[];
+  steps: (string | Step)[];
 };
+
+export function toStep(s: string | Step): Step {
+  return typeof s === "string" ? { text: s } : s;
+}
 
 export const tasks: Task[] = [
   {
     id: "kuchen",
     title: "Kuchen backen",
     steps: [
-      "Schauen Sie in den Schrank. Haben Sie Mehl, Zucker, Butter und Eier?",
-      "Schreiben Sie auf einen Zettel, was fehlt.",
-      "Ziehen Sie Jacke und Schuhe an.",
-      "Nehmen Sie Zettel, Geldbeutel und Schlüssel mit.",
-      "Gehen Sie in den Laden und kaufen Sie, was auf dem Zettel steht.",
-      "Gehen Sie nach Hause und legen Sie alles auf den Tisch.",
+      {
+        text: "Schauen Sie in den Schrank. Haben Sie Mehl, Zucker, Butter und Eier?",
+        ask: "Ist alles da?",
+        ifNo: [
+          "Schreiben Sie auf einen Zettel, was fehlt.",
+          "Ziehen Sie Jacke und Schuhe an.",
+          "Nehmen Sie Zettel, Geldbeutel und Schlüssel mit.",
+          "Gehen Sie in den Laden und kaufen Sie, was auf dem Zettel steht.",
+          "Gehen Sie nach Hause und legen Sie alles auf den Tisch.",
+        ],
+      },
       "Stellen Sie den Backofen auf 180 Grad.",
       "Geben Sie Butter und Zucker in eine große Schüssel und rühren Sie um.",
       "Schlagen Sie die Eier dazu und rühren Sie weiter.",

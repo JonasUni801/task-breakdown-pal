@@ -33,6 +33,9 @@ export const buildSteps = createServerFn({ method: "POST" })
               "- Am Ende: aufräumen, Herd und Licht ausschalten.",
               "Regeln: ein Schritt = eine einzige Handlung, Du-Form ('Schau nach, ob ...'), höchstens 14 Wörter pro Schritt, keine Nummerierung, keine Fachwörter, 6 bis 18 Schritte.",
               "Wecker und Uhrzeiten nennst du konkret, zum Beispiel 'Stell einen Wecker auf 7:00 Uhr'.",
+              "Wichtig: Bei jedem Schritt, wo etwas fehlen oder schiefgehen kann (Zutaten, Material, Kleidung, Geld, Zeit), setze eine kurze Ja/Nein-Frage in 'ask' und in 'subSteps' die Unterschritte, die dann nötig sind (z. B. Zettel schreiben, Jacke anziehen, Geld mitnehmen, einkaufen gehen, zurückkommen).",
+              "Die Frage in 'ask' muss immer so gestellt sein, dass 'Ja' bedeutet: alles in Ordnung, es geht weiter. Also 'Ist alles da?' oder 'Hast du alles gefunden?' – niemals 'Fehlt etwas?'.",
+              "Bei Schritten ohne solche Unsicherheit lass 'ask' auf null und 'subSteps' leer.",
               "Der letzte Schritt endet mit 'Fertig!'. Antworte nur als JSON.",
             ].join("\n"),
           },
@@ -41,7 +44,6 @@ export const buildSteps = createServerFn({ method: "POST" })
             content: `Heute ist ${new Date().toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Berlin" })}.\nDie Person sagt: ${data.wish}`,
           },
         ],
-
         response_format: {
           type: "json_schema",
           json_schema: {
@@ -53,7 +55,19 @@ export const buildSteps = createServerFn({ method: "POST" })
               required: ["title", "steps"],
               properties: {
                 title: { type: "string" },
-                steps: { type: "array", items: { type: "string" } },
+                steps: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    additionalProperties: false,
+                    required: ["text", "ask", "subSteps"],
+                    properties: {
+                      text: { type: "string" },
+                      ask: { type: ["string", "null"] },
+                      subSteps: { type: "array", items: { type: "string" } },
+                    },
+                  },
+                },
               },
             },
           },
@@ -73,12 +87,29 @@ export const buildSteps = createServerFn({ method: "POST" })
     };
     const content = json.choices?.[0]?.message?.content ?? "";
     const parsed = z
-      .object({ title: z.string().min(1), steps: z.array(z.string().min(1)).min(1) })
+      .object({
+        title: z.string().min(1),
+        steps: z
+          .array(
+            z.object({
+              text: z.string().min(1),
+              ask: z.string().nullable().optional(),
+              subSteps: z.array(z.string().min(1)).nullable().optional(),
+            }),
+          )
+          .min(1),
+      })
       .parse(JSON.parse(content));
 
     return {
       id: `eigene-${Date.now()}`,
       title: parsed.title,
-      steps: parsed.steps,
+      steps: parsed.steps.map((s) => {
+        const subs = (s.subSteps ?? []).filter((x) => x.trim().length > 0);
+        return subs.length > 0 && s.ask
+          ? { text: s.text, ask: s.ask, ifNo: subs }
+          : { text: s.text };
+      }),
     };
   });
+

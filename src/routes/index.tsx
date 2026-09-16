@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { tasks, type Task } from "@/lib/tasks";
+import { tasks, toStep, type Step, type Task } from "@/lib/tasks";
 import { buildSteps } from "@/lib/steps.functions";
 
 
@@ -28,11 +28,29 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   const [task, setTask] = useState<Task | null>(null);
+  const [steps, setSteps] = useState<Step[]>([]);
   const [step, setStep] = useState(0);
+
+  const start = (t: Task) => {
+    setTask(t);
+    setSteps(t.steps.map(toStep));
+    setStep(0);
+  };
 
   const reset = () => {
     setTask(null);
+    setSteps([]);
     setStep(0);
+  };
+
+  // Bei "Nein" die Unterschritte direkt hinter dem aktuellen Schritt einschieben
+  const addSubSteps = (subs: string[]) => {
+    setSteps((prev) => [
+      ...prev.slice(0, step + 1),
+      ...subs.map((text) => ({ text, sub: true })),
+      ...prev.slice(step + 1),
+    ]);
+    setStep((s) => s + 1);
   };
 
   return (
@@ -55,13 +73,15 @@ function Index() {
 
       <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center px-6 py-12">
         {!task ? (
-          <TaskPicker onPick={setTask} />
-        ) : step < task.steps.length ? (
+          <TaskPicker onPick={start} />
+        ) : step < steps.length ? (
           <StepView
-            task={task}
+            title={task.title}
+            steps={steps}
             step={step}
             onDone={() => setStep((s) => s + 1)}
             onBack={() => setStep((s) => Math.max(0, s - 1))}
+            onNo={addSubSteps}
           />
         ) : (
           <FinishedView task={task} onReset={reset} />
@@ -70,6 +90,7 @@ function Index() {
     </div>
   );
 }
+
 
 function TaskPicker({ onPick }: { onPick: (t: Task) => void }) {
   const build = useServerFn(buildSteps);
@@ -153,25 +174,33 @@ function TaskPicker({ onPick }: { onPick: (t: Task) => void }) {
 
 
 function StepView({
-  task,
+  title,
+  steps,
   step,
   onDone,
   onBack,
+  onNo,
 }: {
-  task: Task;
+  title: string;
+  steps: Step[];
   step: number;
   onDone: () => void;
   onBack: () => void;
+  onNo: (subs: string[]) => void;
 }) {
-  const total = task.steps.length;
+  const total = steps.length;
+  const current = steps[step]!;
+  const isSub = "sub" in current && (current as { sub?: boolean }).sub;
+  const hasQuestion = Boolean(current.ask && current.ifNo?.length);
+
   return (
     <div className="flex w-full flex-1 flex-col gap-8">
       <div className="flex items-center justify-between text-xl text-muted-foreground">
         <span className="font-medium">
-          {task.title} · Schritt {step + 1} von {total}
+          {title} · Schritt {step + 1} von {total}
         </span>
         <div className="flex gap-2">
-          {task.steps.map((_, i) => (
+          {steps.map((_, i) => (
             <span
               key={i}
               className={`size-4 rounded-full ${
@@ -186,27 +215,61 @@ function StepView({
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col items-center justify-center rounded-3xl bg-card px-8 py-16 text-center shadow-sm ring-1 ring-border">
+      <div className="flex flex-1 flex-col items-center justify-center gap-6 rounded-3xl bg-card px-8 py-16 text-center shadow-sm ring-1 ring-border">
+        {isSub && (
+          <span className="rounded-full bg-muted px-5 py-2 text-xl font-medium text-muted-foreground">
+            Kleiner Zwischenschritt
+          </span>
+        )}
         <p className="font-display text-5xl font-semibold leading-tight text-balance">
-          {task.steps[step]}
+          {current.text}
         </p>
+        {hasQuestion && (
+          <p className="text-3xl leading-relaxed text-muted-foreground">
+            {current.ask}
+          </p>
+        )}
       </div>
 
-      <div className="flex gap-4">
-        <button
-          onClick={onBack}
-          disabled={step === 0}
-          className="rounded-2xl bg-muted px-8 py-6 text-2xl font-medium text-muted-foreground disabled:opacity-40"
-        >
-          Zurück
-        </button>
-        <button
-          onClick={onDone}
-          className="flex-1 rounded-2xl bg-success px-8 py-6 text-3xl font-bold text-success-foreground shadow-sm transition-colors hover:bg-success-deep"
-        >
-          Fertig
-        </button>
-      </div>
+      {hasQuestion ? (
+        <div className="flex flex-col gap-4">
+          <button
+            onClick={onDone}
+            className="rounded-2xl bg-success px-8 py-6 text-3xl font-bold text-success-foreground shadow-sm transition-colors hover:bg-success-deep"
+          >
+            Ja, alles gut
+          </button>
+          <button
+            onClick={() => onNo(current.ifNo!)}
+            className="rounded-2xl bg-primary px-8 py-6 text-3xl font-bold text-primary-foreground shadow-sm transition-colors hover:bg-primary-deep"
+          >
+            Nein, noch nicht
+          </button>
+          <button
+            onClick={onBack}
+            disabled={step === 0}
+            className="rounded-2xl bg-muted px-8 py-4 text-2xl font-medium text-muted-foreground disabled:opacity-40"
+          >
+            Zurück
+          </button>
+        </div>
+      ) : (
+        <div className="flex gap-4">
+          <button
+            onClick={onBack}
+            disabled={step === 0}
+            className="rounded-2xl bg-muted px-8 py-6 text-2xl font-medium text-muted-foreground disabled:opacity-40"
+          >
+            Zurück
+          </button>
+          <button
+            onClick={onDone}
+            className="flex-1 rounded-2xl bg-success px-8 py-6 text-3xl font-bold text-success-foreground shadow-sm transition-colors hover:bg-success-deep"
+          >
+            Fertig
+          </button>
+        </div>
+      )}
 
       <p className="text-center text-lg text-muted-foreground">
         Nehmen Sie sich Zeit. Es gibt keinen Stress.
@@ -214,6 +277,7 @@ function StepView({
     </div>
   );
 }
+
 
 function FinishedView({ task, onReset }: { task: Task; onReset: () => void }) {
   return (
