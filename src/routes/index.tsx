@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { tasks, type Task } from "@/lib/tasks";
+import { tasks, toStep, type Step, type Task } from "@/lib/tasks";
 import { buildSteps } from "@/lib/steps.functions";
 
 
