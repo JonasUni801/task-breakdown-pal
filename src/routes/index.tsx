@@ -237,7 +237,7 @@ function StepView({
             onClick={onDone}
             className="rounded-2xl bg-success px-8 py-6 text-3xl font-bold text-success-foreground shadow-sm transition-colors hover:bg-success-deep"
           >
-            Ja, alles da
+            Ja, alles gut
           </button>
           <button
             onClick={() => onNo(current.ifNo!)}
