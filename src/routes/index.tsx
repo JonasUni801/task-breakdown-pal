@@ -72,15 +72,70 @@ function Index() {
 }
 
 function TaskPicker({ onPick }: { onPick: (t: Task) => void }) {
+  const build = useServerFn(buildSteps);
+  const [wish, setWish] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const text = wish.trim();
+    if (text.length < 2) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const task = await build({ data: { wish: text } });
+      onPick(task);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "";
+      setError(
+        msg.includes("KEIN_GUTHABEN")
+          ? "Die Hilfe ist gerade nicht verfügbar. Bitte später noch einmal versuchen."
+          : msg.includes("ZU_VIELE_ANFRAGEN")
+            ? "Bitte warten Sie einen Moment und versuchen Sie es dann noch einmal."
+            : "Das hat leider nicht geklappt. Bitte versuchen Sie es noch einmal.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="flex w-full flex-col items-center gap-10 text-center">
       <h1 className="font-display text-5xl font-semibold leading-tight text-balance">
         Was möchten Sie heute machen?
       </h1>
       <p className="max-w-md text-2xl leading-relaxed text-muted-foreground">
-        Tippen Sie auf eine Aufgabe. Wir gehen sie dann ganz in Ruhe zusammen
+        Schreiben Sie es einfach hin. Wir gehen es dann ganz in Ruhe zusammen
         durch.
       </p>
+
+      <form onSubmit={submit} className="flex w-full flex-col gap-4">
+        <input
+          value={wish}
+          onChange={(e) => setWish(e.target.value)}
+          maxLength={120}
+          disabled={loading}
+          placeholder="Zum Beispiel: Wäsche waschen"
+          className="w-full rounded-3xl bg-card px-8 py-7 text-3xl shadow-sm ring-1 ring-border outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-primary"
+        />
+        <button
+          type="submit"
+          disabled={loading || wish.trim().length < 2}
+          className="rounded-3xl bg-primary px-8 py-7 text-3xl font-bold text-primary-foreground shadow-sm transition-colors hover:bg-primary-deep disabled:opacity-40"
+        >
+          {loading ? "Einen Moment …" : "Los geht’s"}
+        </button>
+      </form>
+
+      {error && (
+        <p className="max-w-md text-2xl leading-relaxed text-destructive">
+          {error}
+        </p>
+      )}
+
+      <p className="text-xl text-muted-foreground">Oder wählen Sie hier:</p>
+
       <div className="flex w-full flex-col gap-4">
         {tasks.map((t) => (
           <button
@@ -95,6 +150,7 @@ function TaskPicker({ onPick }: { onPick: (t: Task) => void }) {
     </div>
   );
 }
+
 
 function StepView({
   task,
