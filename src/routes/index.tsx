@@ -28,11 +28,29 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   const [task, setTask] = useState<Task | null>(null);
+  const [steps, setSteps] = useState<Step[]>([]);
   const [step, setStep] = useState(0);
+
+  const start = (t: Task) => {
+    setTask(t);
+    setSteps(t.steps.map(toStep));
+    setStep(0);
+  };
 
   const reset = () => {
     setTask(null);
+    setSteps([]);
     setStep(0);
+  };
+
+  // Bei "Nein" die Unterschritte direkt hinter dem aktuellen Schritt einschieben
+  const addSubSteps = (subs: string[]) => {
+    setSteps((prev) => [
+      ...prev.slice(0, step + 1),
+      ...subs.map((text) => ({ text, sub: true })),
+      ...prev.slice(step + 1),
+    ]);
+    setStep((s) => s + 1);
   };
 
   return (
@@ -55,13 +73,15 @@ function Index() {
 
       <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center px-6 py-12">
         {!task ? (
-          <TaskPicker onPick={setTask} />
-        ) : step < task.steps.length ? (
+          <TaskPicker onPick={start} />
+        ) : step < steps.length ? (
           <StepView
-            task={task}
+            title={task.title}
+            steps={steps}
             step={step}
             onDone={() => setStep((s) => s + 1)}
             onBack={() => setStep((s) => Math.max(0, s - 1))}
+            onNo={addSubSteps}
           />
         ) : (
           <FinishedView task={task} onReset={reset} />
@@ -70,6 +90,7 @@ function Index() {
     </div>
   );
 }
+
 
 function TaskPicker({ onPick }: { onPick: (t: Task) => void }) {
   const build = useServerFn(buildSteps);
