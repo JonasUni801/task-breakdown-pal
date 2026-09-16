@@ -37,6 +37,8 @@ function Index() {
   const [task, setTask] = useState<Task | null>(null);
   const [steps, setSteps] = useState<Step[]>([]);
   const [step, setStep] = useState(0);
+  const [voiceOn, setVoiceOn] = useState(true);
+  const ttsSupported = useSpeechSupported();
 
   const start = (t: Task) => {
     setTask(t);
