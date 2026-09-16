@@ -174,25 +174,33 @@ function TaskPicker({ onPick }: { onPick: (t: Task) => void }) {
 
 
 function StepView({
-  task,
+  title,
+  steps,
   step,
   onDone,
   onBack,
+  onNo,
 }: {
-  task: Task;
+  title: string;
+  steps: Step[];
   step: number;
   onDone: () => void;
   onBack: () => void;
+  onNo: (subs: string[]) => void;
 }) {
-  const total = task.steps.length;
+  const total = steps.length;
+  const current = steps[step]!;
+  const isSub = "sub" in current && (current as { sub?: boolean }).sub;
+  const hasQuestion = Boolean(current.ask && current.ifNo?.length);
+
   return (
     <div className="flex w-full flex-1 flex-col gap-8">
       <div className="flex items-center justify-between text-xl text-muted-foreground">
         <span className="font-medium">
-          {task.title} · Schritt {step + 1} von {total}
+          {title} · Schritt {step + 1} von {total}
         </span>
         <div className="flex gap-2">
-          {task.steps.map((_, i) => (
+          {steps.map((_, i) => (
             <span
               key={i}
               className={`size-4 rounded-full ${
@@ -207,27 +215,61 @@ function StepView({
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col items-center justify-center rounded-3xl bg-card px-8 py-16 text-center shadow-sm ring-1 ring-border">
+      <div className="flex flex-1 flex-col items-center justify-center gap-6 rounded-3xl bg-card px-8 py-16 text-center shadow-sm ring-1 ring-border">
+        {isSub && (
+          <span className="rounded-full bg-muted px-5 py-2 text-xl font-medium text-muted-foreground">
+            Kleiner Zwischenschritt
+          </span>
+        )}
         <p className="font-display text-5xl font-semibold leading-tight text-balance">
-          {task.steps[step]}
+          {current.text}
         </p>
+        {hasQuestion && (
+          <p className="text-3xl leading-relaxed text-muted-foreground">
+            {current.ask}
+          </p>
+        )}
       </div>
 
-      <div className="flex gap-4">
-        <button
-          onClick={onBack}
-          disabled={step === 0}
-          className="rounded-2xl bg-muted px-8 py-6 text-2xl font-medium text-muted-foreground disabled:opacity-40"
-        >
-          Zurück
-        </button>
-        <button
-          onClick={onDone}
-          className="flex-1 rounded-2xl bg-success px-8 py-6 text-3xl font-bold text-success-foreground shadow-sm transition-colors hover:bg-success-deep"
-        >
-          Fertig
-        </button>
-      </div>
+      {hasQuestion ? (
+        <div className="flex flex-col gap-4">
+          <button
+            onClick={onDone}
+            className="rounded-2xl bg-success px-8 py-6 text-3xl font-bold text-success-foreground shadow-sm transition-colors hover:bg-success-deep"
+          >
+            Ja, alles da
+          </button>
+          <button
+            onClick={() => onNo(current.ifNo!)}
+            className="rounded-2xl bg-primary px-8 py-6 text-3xl font-bold text-primary-foreground shadow-sm transition-colors hover:bg-primary-deep"
+          >
+            Nein, etwas fehlt
+          </button>
+          <button
+            onClick={onBack}
+            disabled={step === 0}
+            className="rounded-2xl bg-muted px-8 py-4 text-2xl font-medium text-muted-foreground disabled:opacity-40"
+          >
+            Zurück
+          </button>
+        </div>
+      ) : (
+        <div className="flex gap-4">
+          <button
+            onClick={onBack}
+            disabled={step === 0}
+            className="rounded-2xl bg-muted px-8 py-6 text-2xl font-medium text-muted-foreground disabled:opacity-40"
+          >
+            Zurück
+          </button>
+          <button
+            onClick={onDone}
+            className="flex-1 rounded-2xl bg-success px-8 py-6 text-3xl font-bold text-success-foreground shadow-sm transition-colors hover:bg-success-deep"
+          >
+            Fertig
+          </button>
+        </div>
+      )}
 
       <p className="text-center text-lg text-muted-foreground">
         Nehmen Sie sich Zeit. Es gibt keinen Stress.
@@ -235,6 +277,7 @@ function StepView({
     </div>
   );
 }
+
 
 function FinishedView({ task, onReset }: { task: Task; onReset: () => void }) {
   return (
