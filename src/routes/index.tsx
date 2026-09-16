@@ -3,6 +3,13 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { tasks, toStep, type Step, type Task } from "@/lib/tasks";
 import { buildSteps } from "@/lib/steps.functions";
+import {
+  speak,
+  stopSpeaking,
+  useAutoSpeak,
+  useDictation,
+  useSpeechSupported,
+} from "@/lib/speech";
 
 
 export const Route = createFileRoute("/")({
@@ -30,6 +37,8 @@ function Index() {
   const [task, setTask] = useState<Task | null>(null);
   const [steps, setSteps] = useState<Step[]>([]);
   const [step, setStep] = useState(0);
+  const [voiceOn, setVoiceOn] = useState(true);
+  const ttsSupported = useSpeechSupported();
 
   const start = (t: Task) => {
     setTask(t);
